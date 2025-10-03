@@ -17,5 +17,6 @@ app.listen(PORT, () => {
 });
 
 app.get('/', (request, response) => {
-   response.status(200).send('<h1> Everything is working!!</h1>')
-})
+   response.cookie('hello', 'world', { maxAge: 60000 * 60 })
+   response.status(200).send('<h1> Receiving cookie</h1>')
+}) 
