@@ -4,6 +4,8 @@
 */
 
 import express from "express";
+import { query, validationResult, body, matchedData } from "express-validator";
+
 
 const app = express();
 
@@ -50,7 +52,17 @@ app.get('/', loggingMiddleware, (request, response) => {
    response.status(200).send('<h1> Everything is working!!</h1>')
 })
 
-app.get('/api/users', (request, response) => {
+app.get( 
+   '/api/users', 
+   query('filter')
+   .isString()
+   .notEmpty()
+   .withMessage('Must not be empty')
+   .isLength({ min: 3, max: 15})
+   .withMessage('Must be at least 3 - 10 characters'), 
+   (request, response) => {
+   const result = validationResult(request);
+   console.log(result);
    const { query: { filter, value },
    } = request;
 
@@ -61,31 +73,37 @@ app.get('/api/users', (request, response) => {
    return response.send(mockUsers);
 })
 
-app.get('/api/users/:id', (request, response) => {
-   const parsedId = parseInt(request.params.id)
-
-   if (isNaN(parsedId)) return response.status(400).send({
-      msg: "Bad Request. Invalid Id."
-   });
-
-   const findUser = mockUsers.find((user) => user.id === parsedId)
+app.get('/api/users/:id', resolveIndexByUserId, (request, response) => {
+   const { findUserIndex } = request;
+   const findUser = mockUsers[findUserIndex];
    if (!findUser) return response.sendStatus(404);
    return response.send(findUser);
 });
 
-app.post('/api/users', (request, response) => {
-   const { body } = request;
-   const newUser = { id: mockUsers[mockUsers.length - 1].id + 1, ...body };
+app.post(
+   '/api/users', 
+   [body('username')
+      .notEmpty()
+      .withMessage('Username cannot be empty')
+      .isLength({ min: 3, max: 30})
+      .withMessage('Username must be at least 3 - 30 characters')
+      .isString()
+      .withMessage('Username must be a string!'),
+   body('displayName')
+      .notEmpty()
+      .withMessage('displayName cannot be empty')
+],
+      (request, response) => {
+   const result = validationResult(request);
+   if (!result.isEmpty()){
+      return response.status(400).send({errors: result.array()});
+   }
+   const data = matchedData(request);
+
+   const newUser = { id: mockUsers[mockUsers.length - 1].id + 1, ...data };
    mockUsers.push(newUser);
    return response.status(201).send(newUser);
 });
-
-app.get('/api/products', (request, response) => {
-   response.status(200).send([
-      { id: 1, name: 'Product 1', description: 'Description of product 1' },
-      { id: 2, name: 'Product 2', description: 'Description of product 2' }
-   ])
-})
 
 app.put('/api/users/:id', resolveIndexByUserId, (request, response) => {
    const { body, findUserIndex } = request;
@@ -93,31 +111,15 @@ app.put('/api/users/:id', resolveIndexByUserId, (request, response) => {
    return response.status(200).send(mockUsers);
 });
 
-app.patch('/api/users/:id', (request, response) => {
-   const { body, params: { id } } = request;
-
-   const parsedId = parseInt(id);
-   if (isNaN(parsedId)) return response.status(400).send({
-      msg: "Bad request. Invalid Id."
-   });
-
-   const findUserIndex = mockUsers.findIndex((user) => user.id === parsedId);
-
-   if (findUserIndex === -1) return response.sendStatus(404);
+app.patch('/api/users/:id', resolveIndexByUserId, (request, response) => {
+   const { body, findUserIndex } = request;
 
    mockUsers[findUserIndex] = { ...mockUsers[findUserIndex], ...body }
    return response.status(200).send(mockUsers)
 });
 
-app.delete('/api/users/:id', (request, response) => {
-   const { params: { id }, } = request;
-
-   const parsedId = parseInt(id);
-   if (isNaN(parsedId)) return response.sendStatus(400);
-
-   const findUserIndex = mockUsers.findIndex((user) => user.id === parsedId);
-   if (findUserIndex === -1) return response.sendStatus(404);
-
+app.delete('/api/users/:id', resolveIndexByUserId, (request, response) => {
+   const { findUserIndex } = request;
    mockUsers.splice(findUserIndex, 1);
    return response.send(mockUsers);
 
