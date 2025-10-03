@@ -4,8 +4,14 @@
 */
 
 import express from "express";
-import { query, validationResult, body, matchedData } from "express-validator";
-
+import { 
+   query, 
+   validationResult, 
+   body, 
+   matchedData, 
+   checkSchema 
+} from "express-validator";
+import { createUserValidationSchema } from './utils/validation_schemas.mjs'
 
 const app = express();
 
@@ -52,26 +58,26 @@ app.get('/', loggingMiddleware, (request, response) => {
    response.status(200).send('<h1> Everything is working!!</h1>')
 })
 
-app.get( 
-   '/api/users', 
+app.get(
+   '/api/users',
    query('filter')
-   .isString()
-   .notEmpty()
-   .withMessage('Must not be empty')
-   .isLength({ min: 3, max: 15})
-   .withMessage('Must be at least 3 - 10 characters'), 
+      .isString()
+      .notEmpty()
+      .withMessage('Must not be empty')
+      .isLength({ min: 3, max: 15 })
+      .withMessage('Must be at least 3 - 10 characters'),
    (request, response) => {
-   const result = validationResult(request);
-   console.log(result);
-   const { query: { filter, value },
-   } = request;
+      const result = validationResult(request);
+      console.log(result);
+      const { query: { filter, value },
+      } = request;
 
-   if (filter && value) return response.send(
-      mockUsers.filter((user) => user[filter].includes(value))
-   );
+      if (filter && value) return response.send(
+         mockUsers.filter((user) => user[filter].includes(value))
+      );
 
-   return response.send(mockUsers);
-})
+      return response.send(mockUsers);
+   })
 
 app.get('/api/users/:id', resolveIndexByUserId, (request, response) => {
    const { findUserIndex } = request;
@@ -80,23 +86,10 @@ app.get('/api/users/:id', resolveIndexByUserId, (request, response) => {
    return response.send(findUser);
 });
 
-app.post(
-   '/api/users', 
-   [body('username')
-      .notEmpty()
-      .withMessage('Username cannot be empty')
-      .isLength({ min: 3, max: 30})
-      .withMessage('Username must be at least 3 - 30 characters')
-      .isString()
-      .withMessage('Username must be a string!'),
-   body('displayName')
-      .notEmpty()
-      .withMessage('displayName cannot be empty')
-],
-      (request, response) => {
+app.post('/api/users', checkSchema(createUserValidationSchema), (request, response) => {
    const result = validationResult(request);
-   if (!result.isEmpty()){
-      return response.status(400).send({errors: result.array()});
+   if (!result.isEmpty()) {
+      return response.status(400).send({ errors: result.array() });
    }
    const data = matchedData(request);
 
