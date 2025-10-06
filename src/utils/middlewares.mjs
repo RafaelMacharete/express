@@ -1,5 +1,8 @@
+/*
+   Middleware means a middle process between one or two or many
+   different functions or toher processess
+*/
 import { mockUsers } from "./constants.mjs";
-
 
 // Custom middleware
 export const loggingMiddleware = (request, response, next) => {
