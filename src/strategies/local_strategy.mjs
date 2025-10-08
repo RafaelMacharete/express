@@ -3,16 +3,10 @@ import { Strategy } from "passport-local";
 import { mockUsers } from "../utils/constants.mjs";
 
 passport.serializeUser((user, done) => {
-    console.log(`Inside Serialize USer`);
-    console.log(user);
-    
     done(null, user.id);
 });
 
 passport.deserializeUser(async (id, done) => {
-    console.log(`Inside Deserializer`);
-    console.log(`Deserializing User ID: ${id}`);
-    
     try {
         const findUser = mockUsers.find((user) => user.id === id);
         if (!findUser) throw new Error("User Not Found");

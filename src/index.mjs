@@ -37,7 +37,6 @@ app.post('/api/auth', passport.authenticate('local'), (request, response) => {
 });
 
 app.get('/', (request, response) => {
-   console.log(request.session.id);
    request.session.visited = true;
    response.cookie('hello', 'world', { maxAge: 10000, signed: true })
    response.status(200).send('<h1> Receiving cookie</h1>')
@@ -56,30 +55,19 @@ app.post('/api/auth', (request, response) => {
    response.status(200).send(findUser);
 });
 
-app.get('/api/auth/status', (request, response) => {
-   request.sessionStore.get(request.sessionID, (err, session) => {
-      console.log(session);
+app.post('/api/auth/logout', (request, response) => {
+   console.log(request.user);
+   
+   if(!request.user) return response.sendStatus(401);
+   
+   request.logout((err) => {
+      if (err) return response.sendStatus(400);
+      response.send(200);
    })
+})
 
+app.get('/api/auth/status', (request, response) => {
    return request.session.user ?
       response.status(200).send(request.session.user) :
       response.status(401).send({ msg: "Not Authenticated" });
 });
-
-app.post('/api/cart', (request, response) => {
-   if (!request.session.user) return response.sendStatus(401);
-   const { body: item } = request;
-   const { cart } = request.session;
-   if (cart) { // If car is already defined, just push into.
-      cart.push(item);
-   } else { // If not, create it instance within session of request
-      request.session.cart = [item]
-   }
-
-   return response.status(201).send(item);
-});
-
-app.get('/api/cart', (request, response) => {
-   if (!request.session.user) return response.sendStatus(401);
-   return response.send(request.session.cart ?? []);
-})
