@@ -4,21 +4,15 @@ import cookieParser from "cookie-parser";
 import session from "express-session";
 import { mockUsers } from "./utils/constants.mjs";
 import passport from "passport";
-import mongoose from "mongoose";
 import './strategies/local_strategy.mjs';
 
 const app = express();
 
-mongoose
-   .connect('mongodb://localhost:27017/express_tutorial')
-   .then(() => console.log("Connected to the database")) // We can omit the port here
-   .catch((err) => console.log(`Err: ${err}`));
-
 app.use(express.json());
-app.use(cookieParser('helloworld'));
+app.use(cookieParser('pm'));
 app.use(
    session({
-      session: 'macharete rafael',
+      session: 'process mapping',
       saveUninitialized: false, // Controls wheter a new, but unmodified, 
       // session should be saved to the session store. False: when we don't want to save unmodified session data to the session store
       resave: false,
